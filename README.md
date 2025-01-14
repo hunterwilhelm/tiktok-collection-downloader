@@ -1,3 +1,17 @@
+# What is this?
+
+This is a script that downloads videos organized by collection from a TikTok account.
+
+# Example File Tree
+
+```
+tiktok-collection-downloader/
+├── videos/
+│   └── hunterswilhelm_-_Eclipse/
+│       ├── mylifeassugar_ 1712602403 7355571214556974379.info.json
+│       ├── mylifeassugar_ 1712602403 7355571214556974379.mp4
+```
+
 # How to run
 
 1. Install: [bun](https://bun.sh)
