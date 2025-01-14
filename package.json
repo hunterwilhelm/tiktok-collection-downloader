@@ -5,7 +5,8 @@
   "scripts": {
     "start": "bun index.ts",
     "clear-collections": "rm account-info/collections.json",
-    "count": "find videos -type f -name \"*.mp4\" | wc -l"
+    "count": "find videos -type f -name \"*.mp4\" | wc -l",
+    "size": "du -sh videos"
   },
   "devDependencies": {
     "@types/bun": "latest"
