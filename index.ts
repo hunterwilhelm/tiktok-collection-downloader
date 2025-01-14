@@ -1,8 +1,12 @@
-import { $ } from "bun";
+import { $, spawn } from "bun";
 
-if (!await Bun.file("account-info/www.tiktok.com_cookies.txt").exists()) {
-  console.log("Use the chrome extension to: https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc")
-  console.log("Download the cookies file from https://www.tiktok.com/ and save it as ./account-info/www.tiktok.com_cookies.txt");
+if (!(await Bun.file("account-info/www.tiktok.com_cookies.txt").exists())) {
+  console.log(
+    "Use the chrome extension to: https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc"
+  );
+  console.log(
+    "Download the cookies file from https://www.tiktok.com/ and save it as ./account-info/www.tiktok.com_cookies.txt"
+  );
   process.exit(1);
 }
 
@@ -13,7 +17,8 @@ if (!username) {
   username = prompt("Enter TikTok username");
   await Bun.write("account-info/username.txt", username);
 }
-const secUidText = await $`curl -b ./account-info/www.tiktok.com_cookies.txt "https://www.tiktok.com/@${username}?lang=en"`.text();
+const secUidText =
+  await $`curl -b ./account-info/www.tiktok.com_cookies.txt "https://www.tiktok.com/@${username}?lang=en"`.text();
 
 const secUid = secUidText.match(/"secUid":"([^"]+)"/)?.[1];
 if (!secUid) {
@@ -27,15 +32,20 @@ if (collectionList.length === 0) {
   console.log("Fetching collections...");
   let cursor = "0";
   while (true) {
-    console.log(">", cursor)
-    const result = await $`curl -b ./account-info/www.tiktok.com_cookies.txt 'https://www.tiktok.com/api/user/collection_list/?aid=1988&count=30&cursor=${cursor}&secUid=${secUid}'`.json();
+    console.log(">", cursor);
+    const result =
+      await $`curl -b ./account-info/www.tiktok.com_cookies.txt 'https://www.tiktok.com/api/user/collection_list/?aid=1988&count=30&cursor=${cursor}&secUid=${secUid}'`.json();
     if (!result.collectionList) {
       break;
     }
     const collectionsFormatted = result.collectionList.map((collection) => ({
-      url: `https://www.tiktok.com/@${collection.userName}/collection/${encodeURIComponent(collection.name)}-${collection.collectionId}`,
+      url: `https://www.tiktok.com/@${
+        collection.userName
+      }/collection/${encodeURIComponent(collection.name)}-${
+        collection.collectionId
+      }`,
       folderName: `${collection.userName} - ${collection.name}`,
-      total: parseInt(collection.total)
+      total: parseInt(collection.total),
     }));
     collectionList.push(...collectionsFormatted);
     if (result.cursor === `${result.total}`) {
@@ -54,7 +64,7 @@ if (collectionList.length === 0) {
 }
 for (const collection of collectionList) {
   const folder = `./videos/${sanitizeFilename(collection.folderName)}`;
-  await $`yt-dlp --cookies "account-info/www.tiktok.com_cookies.txt" --referer "https://www.tiktok.com/" "${collection.url}" -o "${folder}/%(uploader)s %(timestamp)s %(id)s.%(ext)s" --write-info-json --download-archive "${folder}/archive.txt"`;
+  await downloadTikTokVideo(collection.url, folder);
 }
 
 function sanitizeFilename(input: string): string {
@@ -70,4 +80,30 @@ function sanitizeFilename(input: string): string {
 
   // Ensure the filename isn't empty and doesn't end with a dot
   return safeString ?? sanitizeFilename(new Date().toISOString());
+}
+
+async function downloadTikTokVideo(url: string, folder: string) {
+  const command = [
+    "yt-dlp",
+    "--cookies",
+    "account-info/www.tiktok.com_cookies.txt",
+    "--referer",
+    "https://www.tiktok.com/",
+    url,
+    "-o",
+    `${folder}/%(uploader)s %(timestamp)s %(id)s.%(ext)s`,
+    "--write-info-json",
+    "--download-archive",
+    `${folder}/archive.txt`,
+  ];
+
+  const process = spawn({
+    cmd: command,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  // print to console.log
+  for await (const chunk of process.stdout) {
+    console.log(new TextDecoder().decode(chunk));
+  }
 }
