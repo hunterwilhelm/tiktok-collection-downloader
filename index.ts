@@ -33,7 +33,7 @@ if (collectionList.length === 0) {
       break;
     }
     const collectionsFormatted = result.collectionList.map((collection) => ({
-      url: `https://www.tiktok.com/@${collection.userName}/collection/${collection.name}-${collection.collectionId}`,
+      url: `https://www.tiktok.com/@${collection.userName}/collection/${encodeURIComponent(collection.name)}-${collection.collectionId}`,
       folderName: `${collection.userName} - ${collection.name}`,
       total: parseInt(collection.total)
     }));
